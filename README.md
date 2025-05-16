@@ -15,7 +15,7 @@ This extension injects JS to perform busy main thread activity, helping to simul
 
 ## Usage
 
-The extension injects a script that runs a task taking X milliseconds every Y milliseconds. "Jank Time" input sets X, "Interval" sets Y.
+The extension injects a script that runs a task taking X milliseconds every Y milliseconds. Click the extension and choose the settings, then hit "Start Jank"! "Jank Time" input sets X, "Interval" sets Y.
 
 You can use the "Long Tasks" section to see how many long tasks have run on the current page to get a feeling for how long the normal long tasks are on your site. (note that this represents long tasks your current device and might not represent low-end devices)
 
