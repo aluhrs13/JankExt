@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Jank Simulator</title>
+    <style>
+      body {
+        width: 350px;
+        padding: 10px;
+        font-family: Arial, sans-serif;
+      }
+      .control-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      button {
+        padding: 8px 12px;
+        margin-right: 10px;
+        cursor: pointer;
+      }
+      .value-display {
+        display: inline-block;
+        width: 50px;
+        text-align: right;
+      }
+      #status-indicator {
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-weight: bold;
+        text-align: center;
+      }
+      .status-inactive {
+        background-color: #f0f0f0;
+        color: #666;
+      }
+      .status-active {
+        background-color: #ffeb3b;
+        color: #333;
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      .section-header {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .bar-chart {
+        margin-top: 10px;
+      }
+      .bar-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+      .bar-label {
+        width: 80px;
+      }
+      .bar {
+        background-color: #4285f4;
+        height: 15px;
+        min-width: 1px;
+        border-radius: 2px;
+      }
+      .bar-value {
+        margin-left: 5px;
+        font-size: 12px;
+      }
+      #refresh-btn {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+      .status-message {
+        color: #666;
+        font-style: italic;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Jank Simulator</h2>
+
+    <div id="status-indicator" class="status-inactive">INACTIVE</div>
+
+    <div class="control-group">
+      <label for="jank-time"
+        >Jank Time (ms):
+        <span id="time-value" class="value-display">200</span></label
+      >
+      <input
+        type="range"
+        id="jank-time"
+        min="10"
+        max="1000"
+        value="200"
+        step="10"
+      />
+    </div>
+
+    <div class="control-group">
+      <label for="jank-interval"
+        >Interval (ms):
+        <span id="interval-value" class="value-display">400</span></label
+      >
+      <input
+        type="range"
+        id="jank-interval"
+        min="100"
+        max="5000"
+        value="400"
+        step="100"
+      />
+    </div>
+
+    <div class="actions">
+      <button id="start-jank">Start Jank</button>
+      <button id="stop-jank">Stop Jank</button>
+    </div>
+
+    <div class="section-header">
+      <span>Long Tasks</span>
+      <button id="refresh-btn">Refresh</button>
+    </div>
+
+    <div id="long-tasks-container">
+      <p id="longtask-status" class="status-message">
+        Click refresh to get long task data
+      </p>
+      <div id="long-task-count"></div>
+      <div id="long-task-distribution" class="bar-chart"></div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

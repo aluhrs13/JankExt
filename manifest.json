@@ -1,0 +1,16 @@
+{
+  "name": "Jank Simulator",
+  "version": "1.0",
+  "description": "Simulates UI jank by running long tasks on the main thread",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "permissions": ["activeTab", "scripting"]
+}
