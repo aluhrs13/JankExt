@@ -91,6 +91,26 @@
         font-style: italic;
         font-size: 12px;
       }
+      .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 12px;
+      }
+      .history-table th, .history-table td {
+        padding: 5px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      .history-table th {
+        font-weight: bold;
+      }
+      .history-url {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     </style>
   </head>
   <body>
@@ -144,6 +164,28 @@
       </p>
       <div id="long-task-count"></div>
       <div id="long-task-distribution" class="bar-chart"></div>
+    </div>
+
+    <div class="section-header">
+      <span>Recent History</span>
+      <button id="refresh-history-btn">Refresh</button>
+    </div>
+
+    <div id="history-container">
+      <p id="history-status" class="status-message">
+        Loading recent history...
+      </p>
+      <table id="history-table" class="history-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Time Spent</th>
+          </tr>
+        </thead>
+        <tbody id="history-items">
+          <!-- History items will be inserted here -->
+        </tbody>
+      </table>
     </div>
 
     <script src="popup.js"></script>
