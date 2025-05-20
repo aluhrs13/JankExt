@@ -7,12 +7,17 @@ document.addEventListener('DOMContentLoaded', function () {
   const stopButton = document.getElementById('stop-jank');
   const statusIndicator = document.getElementById('status-indicator');
   const refreshButton = document.getElementById('refresh-btn');
+  const refreshHistoryButton = document.getElementById('refresh-history-btn');
   const longTaskCountElement = document.getElementById('long-task-count');
   const longTaskDistributionElement = document.getElementById(
     'long-task-distribution'
   );
+  const historyItemsContainer = document.getElementById('history-items');
+  const historyStatusElement = document.getElementById('history-status');
 
   let longTaskData = null;
+  let historyItems = [];
+  let isActive = false;
 
   jankTimeSlider.addEventListener('input', function () {
     timeValueDisplay.textContent = jankTimeSlider.value;
@@ -55,6 +60,11 @@ document.addEventListener('DOMContentLoaded', function () {
     requestLongTaskData();
   });
 
+  // Refresh history data
+  refreshHistoryButton.addEventListener('click', function () {
+    fetchRecentHistory();
+  });
+
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     chrome.scripting.executeScript({
       target: { tabId: tabs[0].id },
@@ -62,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     requestLongTaskData();
+    fetchRecentHistory();
   });
 
   // Listen for messages from content script
@@ -191,4 +202,118 @@ document.addEventListener('DOMContentLoaded', function () {
       '*'
     );
   }
+
+  // Function to fetch recent history
+  function fetchRecentHistory() {
+    if (historyStatusElement) {
+      historyStatusElement.textContent = 'Fetching recent history...';
+    }
+
+    // Get history from the last 24 hours (in milliseconds)
+    const startTime = new Date().getTime() - 24 * 60 * 60 * 1000;
+    
+    chrome.history.search({
+      text: '',          // Return all history items
+      startTime: startTime,
+      maxResults: 10     // Limit to 10 most recent
+    }, function(results) {
+      historyItems = results;
+      updateHistoryDisplay();
+    });
+  }
+
+  // Update the history display with data
+  function updateHistoryDisplay() {
+    if (historyStatusElement) {
+      historyStatusElement.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+    }
+
+    // Clear previous history items
+    historyItemsContainer.innerHTML = '';
+
+    if (historyItems.length === 0) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.setAttribute('colspan', '2');
+      cell.textContent = 'No recent history items';
+      row.appendChild(cell);
+      historyItemsContainer.appendChild(row);
+      return;
+    }
+
+    // Sort by most recent first
+    historyItems.sort((a, b) => b.lastVisitTime - a.lastVisitTime);
+    
+    // Process each history item and calculate time spent
+    let previousTime = null;
+    
+    historyItems.forEach((item, index) => {
+      const row = document.createElement('tr');
+      
+      // Title cell
+      const titleCell = document.createElement('td');
+      titleCell.className = 'history-url';
+      titleCell.textContent = item.title || new URL(item.url).hostname;
+      titleCell.title = item.url;
+      
+      // Time spent cell
+      const timeCell = document.createElement('td');
+      
+      // Calculate time spent (time difference between this visit and next newest visit)
+      let timeSpent = '';
+      if (index < historyItems.length - 1) {
+        const currentTime = item.lastVisitTime;
+        const nextTime = historyItems[index + 1].lastVisitTime;
+        const diffMs = currentTime - nextTime;
+        
+        // Only show if reasonable (< 30 min)
+        if (diffMs < 30 * 60 * 1000) {
+          timeSpent = formatTimeSpent(diffMs);
+        } else {
+          timeSpent = 'N/A';
+        }
+      } else {
+        timeSpent = 'Current';
+      }
+      
+      timeCell.textContent = timeSpent;
+      
+      row.appendChild(titleCell);
+      row.appendChild(timeCell);
+      historyItemsContainer.appendChild(row);
+    });
+  }
+
+  // Format milliseconds as human-readable time
+  function formatTimeSpent(ms) {
+    if (ms < 1000) {
+      return `${ms}ms`;
+    } else if (ms < 60 * 1000) {
+      return `${Math.round(ms / 1000)}s`;
+    } else {
+      const minutes = Math.floor(ms / (60 * 1000));
+      const seconds = Math.round((ms % (60 * 1000)) / 1000);
+      return `${minutes}m ${seconds}s`;
+    }
+  }
+
+  // Listen for history changes
+  chrome.history.onVisited.addListener(function(historyItem) {
+    // Add to our history items and re-render
+    const existingIndex = historyItems.findIndex(item => item.url === historyItem.url);
+    
+    if (existingIndex !== -1) {
+      // Update existing item
+      historyItems[existingIndex] = historyItem;
+    } else {
+      // Add new item
+      historyItems.unshift(historyItem);
+      // Keep the list at 10 items max
+      if (historyItems.length > 10) {
+        historyItems.pop();
+      }
+    }
+    
+    updateHistoryDisplay();
+  });
 });
