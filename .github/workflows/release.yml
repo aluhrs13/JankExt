@@ -1,0 +1,55 @@
+# This workflow creates a zip file of the Chrome extension and publishes it as a GitHub release.
+# 
+# To trigger this workflow:
+# 1. Create a version tag: git tag v1.0
+# 2. Push the tag: git push origin v1.0
+# 
+# The workflow will automatically create a release with the extension zip file attached.
+
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0, v1.0.0, etc.
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write  # Required for creating releases
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+      - name: Create extension zip
+        run: |
+          # Create a zip file with the extension files
+          # Exclude git files, workflows, and other non-essential files
+          zip -r jank-simulator-${{ steps.get_version.outputs.VERSION }}.zip \
+            manifest.json \
+            background.js \
+            content.js \
+            popup.html \
+            popup.js \
+            index.html \
+            icons/ \
+            LICENSE \
+            README.md \
+            -x "*.git*" "*.github/*"
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: jank-simulator-${{ steps.get_version.outputs.VERSION }}.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
