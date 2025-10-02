@@ -151,6 +151,12 @@ document.addEventListener('DOMContentLoaded', function () {
       jankTimeSlider.disabled = false;
       jankIntervalSlider.disabled = false;
     }
+    
+    // Notify background script to update icon
+    chrome.runtime.sendMessage({
+      type: 'jankStatus',
+      isActive: active
+    });
   }
 
   // Functions to inject into the page

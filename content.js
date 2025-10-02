@@ -14,6 +14,7 @@ function doJank(time = 200) {
 
 let interval;
 let isActive = false;
+let currentSettings = null; // Store current interval settings
 
 // Long task tracking data
 let longTasksData = {
@@ -44,6 +45,58 @@ function initPerformanceObserver() {
 
 // Call this when page loads
 initPerformanceObserver();
+
+// Restore interval state on page load
+function restoreIntervalState() {
+  chrome.storage.local.get(['jankSettings'], (result) => {
+    if (result.jankSettings && result.jankSettings.isActive) {
+      const settings = result.jankSettings;
+      startJankInterval(settings.time, settings.interval);
+    }
+  });
+}
+
+// Start the jank interval
+function startJankInterval(time, intervalTime) {
+  doJank(time);
+  clearInterval(interval);
+  isActive = true;
+  currentSettings = { time, interval: intervalTime };
+
+  interval = setInterval(function () {
+    doJank(time);
+  }, intervalTime);
+
+  // Save settings to storage
+  chrome.storage.local.set({
+    jankSettings: {
+      isActive: true,
+      time: time,
+      interval: intervalTime,
+    },
+  });
+
+  sendStatusToPopup();
+}
+
+// Stop the jank interval
+function stopJankInterval() {
+  clearInterval(interval);
+  isActive = false;
+  currentSettings = null;
+
+  // Clear settings from storage
+  chrome.storage.local.set({
+    jankSettings: {
+      isActive: false,
+    },
+  });
+
+  sendStatusToPopup();
+}
+
+// Restore state when content script loads
+restoreIntervalState();
 
 // Group long tasks by duration range
 function analyzeLongTaskDistribution() {
@@ -119,18 +172,9 @@ addEventListener('message', (event) => {
   const data = event.data;
 
   if (data && data.action === 'doJank') {
-    clearInterval(interval);
-    isActive = true;
-
-    interval = setInterval(function () {
-      doJank(data.time);
-    }, data.interval);
-
-    sendStatusToPopup();
+    startJankInterval(data.time, data.interval);
   } else if (data && data.action === 'stopJank') {
-    clearInterval(interval);
-    isActive = false;
-    sendStatusToPopup();
+    stopJankInterval();
   } else if (data && data.action === 'getStatus') {
     sendStatusToPopup();
   } else if (data && data.action === 'getLongTaskData') {
